@@ -1,5 +1,6 @@
 package com.example.socketloversclient;
 
+import com.example.socketloversclient.cipher.Cipher;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
 import org.json.JSONObject;
@@ -24,8 +25,10 @@ import java.util.Scanner;
 public class SocketloversClientApplication {
     private static String loggedInUser = null;
     private static String message = null;
+	private static String incomingMessage = null;
 
-    static Scanner input = new Scanner(System.in);
+
+	static Scanner input = new Scanner(System.in);
 
 
 
@@ -78,11 +81,11 @@ public class SocketloversClientApplication {
 
 			@Override
 			public void handleFrame(StompHeaders stompHeaders, Object o) {
-				message = new String((byte[]) o);
-				JSONObject jsonObject = new JSONObject(message);
+				incomingMessage = new String((byte[]) o);
+				JSONObject jsonObject = new JSONObject(incomingMessage);
 				String type = (String) jsonObject.get("type");
 				if("CHAT".equals(type)){
-					System.out.println((String) jsonObject.get("sender")+": "+(String) jsonObject.get("content"));
+					System.out.println((String) jsonObject.get("sender")+": "+Cipher.decrypt((String) jsonObject.get("content"),26-1));
 				}else if("JOIN".equals(type)){
 					System.out.println((String) jsonObject.get("sender")+" joined the Chat");
 				}
@@ -122,9 +125,9 @@ public class SocketloversClientApplication {
 		System.out.println("Thank you, "+loggedInUser+" you may chat now");
 
 		while(true){
-            //System.out.println("Enter your Message: ");
-            message = input.nextLine();
 
+			//Get input from user and Encrypt
+            message = Cipher.encrypt(input.nextLine(), 1);
             //logger.info("Sending hello message" + stompSession);
             socketClient.sendMessage(stompSession, message, loggedInUser);
             Thread.sleep(1000);
