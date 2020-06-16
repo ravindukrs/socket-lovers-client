@@ -4,9 +4,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.messaging.simp.stomp.StompHeaders;
-import org.springframework.messaging.simp.stomp.StompSession;
-import org.springframework.messaging.simp.stomp.StompSessionHandlerAdapter;
+import org.springframework.messaging.simp.stomp.*;
 import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.web.socket.WebSocketHttpHeaders;
 import org.springframework.web.socket.client.standard.StandardWebSocketClient;
@@ -16,6 +14,7 @@ import org.springframework.web.socket.sockjs.client.Transport;
 import org.springframework.web.socket.sockjs.client.WebSocketTransport;
 import org.springframework.web.socket.sockjs.frame.Jackson2SockJsMessageCodec;
 
+import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.List;
 
@@ -46,6 +45,40 @@ public class SocketloversClientApplication {
 		}
 	}
 
+	public void subscribeChat(StompSession stompSession){
+		stompSession.subscribe("/topic/public", new StompSessionHandler() {
+			@Override
+			public void afterConnected(StompSession stompSession, StompHeaders stompHeaders) {
+
+			}
+
+			@Override
+			public void handleException(StompSession stompSession, StompCommand stompCommand, StompHeaders stompHeaders, byte[] bytes, Throwable throwable) {
+
+			}
+
+			@Override
+			public void handleTransportError(StompSession stompSession, Throwable throwable) {
+
+			}
+
+			@Override
+			public Type getPayloadType(StompHeaders stompHeaders) {
+				return byte[].class;
+			}
+
+			@Override
+			public void handleFrame(StompHeaders stompHeaders, Object o) {
+				logger.info("Received Message " + new String((byte[]) o));
+			}
+		});
+	}
+
+	public void sendHello(StompSession stompSession) {
+		String jsonHello = "{ \"content\" : \"Hello from Client App\", \"sender\" : \"Client\", \"type\" : \"CHAT\"}";
+		stompSession.send("/app/chat.send", jsonHello.getBytes());
+	}
+
 
 	public static void main(String[] args) throws Exception {
 
@@ -55,10 +88,14 @@ public class SocketloversClientApplication {
 		ListenableFuture<StompSession> f = socketClient.connect();
 		StompSession stompSession = f.get();
 
+		logger.info("Subscribing to Chat topic using session " + stompSession);
+		socketClient.subscribeChat(stompSession);
+
+		logger.info("Sending hello message" + stompSession);
+		socketClient.sendHello(stompSession);
+
 		Thread.sleep(60000);
 
-
-		//SpringApplication.run(SocketloversClientApplication.class, args);
 	}
 
 }
