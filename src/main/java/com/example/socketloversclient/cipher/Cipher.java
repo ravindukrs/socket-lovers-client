@@ -6,6 +6,10 @@ public class Cipher {
             StringBuffer result = new StringBuffer();
 
             for (int i = 0; i < text.length(); i++) {
+                if(text.charAt(i) == ' '){
+                    result.append(' ');
+                    continue;
+                }
                 if (Character.isUpperCase(text.charAt(i))) {
                     char ch = (char) (((int) text.charAt(i) +
                             shift - 65) % 26 + 65);
@@ -24,6 +28,10 @@ public class Cipher {
             StringBuffer result = new StringBuffer();
 
             for (int i = 0; i < cipher.length(); i++) {
+                if(cipher.charAt(i) == ' '){
+                    result.append(' ');
+                    continue;
+                }
                 if (Character.isUpperCase(cipher.charAt(i))) {
                     char ch = (char) (((int) cipher.charAt(i) +
                             shift - 65) % 26 + 65);
