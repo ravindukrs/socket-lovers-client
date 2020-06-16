@@ -2,6 +2,7 @@ package com.example.socketloversclient;
 
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
+import org.json.JSONObject;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.messaging.simp.stomp.*;
@@ -17,11 +18,19 @@ import org.springframework.web.socket.sockjs.frame.Jackson2SockJsMessageCodec;
 import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.List;
+import java.util.Scanner;
 
 @SpringBootApplication
 public class SocketloversClientApplication {
+    private static String loggedInUser = null;
+    private static String message = null;
 
-	private static Logger logger = LogManager.getLogger("SocketloversClientApplication");
+    static Scanner input = new Scanner(System.in);
+
+
+
+
+    private static Logger logger = LogManager.getLogger("SocketloversClientApplication");
 	private final static WebSocketHttpHeaders headers = new WebSocketHttpHeaders();
 
 	public ListenableFuture<StompSession> connect(){
@@ -69,18 +78,33 @@ public class SocketloversClientApplication {
 
 			@Override
 			public void handleFrame(StompHeaders stompHeaders, Object o) {
-				logger.info("Received Message " + new String((byte[]) o));
+				message = new String((byte[]) o);
+				JSONObject jsonObject = new JSONObject(message);
+				String type = (String) jsonObject.get("type");
+				if("CHAT".equals(type)){
+					System.out.println((String) jsonObject.get("sender")+": "+(String) jsonObject.get("content"));
+				}else if("JOIN".equals(type)){
+					System.out.println((String) jsonObject.get("sender")+" joined the Chat");
+				}
+				//logger.info("Received Message " + new String((byte[]) o));
 			}
 		});
 	}
 
-	public void sendHello(StompSession stompSession) {
-		String jsonHello = "{ \"content\" : \"Hello from Client App\", \"sender\" : \"Client\", \"type\" : \"CHAT\"}";
+	public void sendJoinMessage(StompSession stompSession, String sender) {
+		String jsonHello = "{ \"sender\" : \""+sender+"\", \"type\" : \"JOIN\"}";
+		stompSession.send("/app/chat.register", jsonHello.getBytes());
+	}
+
+
+	public void sendMessage(StompSession stompSession, String content, String sender) {
+		String jsonHello = "{ \"content\" : \""+content+"\", \"sender\" : \""+sender+"\", \"type\" : \"CHAT\"}";
 		stompSession.send("/app/chat.send", jsonHello.getBytes());
 	}
 
 
 	public static void main(String[] args) throws Exception {
+
 
 
 		SocketloversClientApplication socketClient = new SocketloversClientApplication();
@@ -91,11 +115,23 @@ public class SocketloversClientApplication {
 		logger.info("Subscribing to Chat topic using session " + stompSession);
 		socketClient.subscribeChat(stompSession);
 
-		logger.info("Sending hello message" + stompSession);
-		socketClient.sendHello(stompSession);
+		System.out.println("Welcome to Socket Lovers!");
+		System.out.println("Enter your Username: ");
+		loggedInUser = input.nextLine();
+		socketClient.sendJoinMessage(stompSession, loggedInUser);
+		System.out.println("Thank you, "+loggedInUser+" you may chat now");
 
-		Thread.sleep(60000);
+		while(true){
+            //System.out.println("Enter your Message: ");
+            message = input.nextLine();
 
+            //logger.info("Sending hello message" + stompSession);
+            socketClient.sendMessage(stompSession, message, loggedInUser);
+            Thread.sleep(1000);
+
+        }
+
+//Thread.sleep(60000);
 	}
 
 }
