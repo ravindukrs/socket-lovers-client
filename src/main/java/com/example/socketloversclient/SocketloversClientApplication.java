@@ -106,34 +106,37 @@ public class SocketloversClientApplication {
 	}
 
 
-	public static void main(String[] args) throws Exception {
+	public static void main(String[] args) throws InterruptedException {
 
+        try{
+			SocketloversClientApplication socketClient = new SocketloversClientApplication();
 
+			ListenableFuture<StompSession> f = socketClient.connect();
+			StompSession stompSession = f.get();
 
-		SocketloversClientApplication socketClient = new SocketloversClientApplication();
+			logger.info("Subscribing to Chat topic using session " + stompSession);
+			socketClient.subscribeChat(stompSession);
 
-		ListenableFuture<StompSession> f = socketClient.connect();
-		StompSession stompSession = f.get();
+			System.out.println("Welcome to Socket Lovers!");
+			System.out.println("Enter your Username: ");
+			loggedInUser = input.nextLine();
+			socketClient.sendJoinMessage(stompSession, loggedInUser);
+			System.out.println("Thank you, "+loggedInUser+" you may chat now");
 
-		logger.info("Subscribing to Chat topic using session " + stompSession);
-		socketClient.subscribeChat(stompSession);
+			while(true){
 
-		System.out.println("Welcome to Socket Lovers!");
-		System.out.println("Enter your Username: ");
-		loggedInUser = input.nextLine();
-		socketClient.sendJoinMessage(stompSession, loggedInUser);
-		System.out.println("Thank you, "+loggedInUser+" you may chat now");
+				//Get input from user and Encrypt
+				message = Cipher.encrypt(input.nextLine(), 1);
+				//logger.info("Sending hello message" + stompSession);
+				socketClient.sendMessage(stompSession, message, loggedInUser);
+				Thread.sleep(1000);
 
-		while(true){
-
-			//Get input from user and Encrypt
-            message = Cipher.encrypt(input.nextLine(), 1);
-            //logger.info("Sending hello message" + stompSession);
-            socketClient.sendMessage(stompSession, message, loggedInUser);
-            Thread.sleep(1000);
-
-        }
-
+			}
+		}catch (Exception e){
+        	System.out.println("Connection Lost, Retrying...");
+			Thread.sleep(3000);
+        	main(args);
+		}
 //Thread.sleep(60000);
 	}
 
