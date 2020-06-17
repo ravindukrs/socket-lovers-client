@@ -6,8 +6,8 @@ public class Cipher {
             StringBuffer result = new StringBuffer();
 
             for (int i = 0; i < text.length(); i++) {
-                if(text.charAt(i) == ' '){
-                    result.append(' ');
+                if(text.charAt(i) == ' ' || !Character.isLetter(text.charAt(i))){
+                    result.append(text.charAt(i));
                     continue;
                 }
                 if (Character.isUpperCase(text.charAt(i))) {
@@ -28,8 +28,8 @@ public class Cipher {
             StringBuffer result = new StringBuffer();
 
             for (int i = 0; i < cipher.length(); i++) {
-                if(cipher.charAt(i) == ' '){
-                    result.append(' ');
+                if(cipher.charAt(i) == ' ' || !Character.isLetter(cipher.charAt(i))){
+                    result.append(cipher.charAt(i));
                     continue;
                 }
                 if (Character.isUpperCase(cipher.charAt(i))) {
